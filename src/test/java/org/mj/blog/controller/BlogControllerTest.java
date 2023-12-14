@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mj.blog.domain.Article;
 import org.mj.blog.dto.AddArticleRequest;
+import org.mj.blog.dto.ArticleResponse;
 import org.mj.blog.repository.BlogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -20,6 +21,8 @@ import org.springframework.web.context.WebApplicationContext;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,5 +75,41 @@ class BlogControllerTest {
         assertThat(articles.size()).isEqualTo(1);
         assertThat(articles.get(0).getTitle()).isEqualTo(title);
         assertThat(articles.get(0).getContent()).isEqualTo(content);
+    }
+
+    @DisplayName("findAll Test")
+    @Test
+    public void testFindAll() throws Exception {
+
+        //given
+        final String url = "/api/articles";
+        Article article = blogRepository.save(Article.builder().title("testTitle").content("testContent").build());
+
+        //when
+        ResultActions result = mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON));
+
+        //then
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value(article.getTitle()))
+                .andExpect(jsonPath("$[0].content").value(article.getContent()));
+
+
+    }
+
+    @DisplayName("test article findById")
+    @Test
+    public void testArticleFindById() throws Exception{
+        //given
+        final String url = "/api/articles/{id}";
+        Article article = blogRepository.save(Article.builder().title("testTitle").content("testContent").build());
+
+        //when
+        ResultActions result = mockMvc.perform(get(url, article.getId()).accept(MediaType.APPLICATION_JSON));
+
+        //then
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").value(article.getContent()))
+                .andExpect(jsonPath("$.title").value(article.getTitle()));
     }
 }
