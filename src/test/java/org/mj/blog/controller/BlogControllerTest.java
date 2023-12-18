@@ -1,5 +1,6 @@
 package org.mj.blog.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mj.blog.domain.Article;
 import org.mj.blog.dto.AddArticleRequest;
 import org.mj.blog.dto.ArticleResponse;
+import org.mj.blog.dto.UpdateAriticleRequest;
 import org.mj.blog.repository.BlogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -22,6 +24,9 @@ import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -111,5 +116,43 @@ class BlogControllerTest {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").value(article.getContent()))
                 .andExpect(jsonPath("$.title").value(article.getTitle()));
+    }
+
+    @DisplayName("test delete article")
+    @Test
+    public void deleteArticle() throws Exception {
+        //given
+        final String url = "/api/articles/{id}";
+        Article article = blogRepository.save(Article.builder().content("deleteContent").title("deleteTitle").build());
+
+        //when
+        ResultActions result = mockMvc.perform(delete(url, article.getId()));
+
+        //then
+        result.andExpect(status().isNoContent());
+
+        List<Article> articles = blogRepository.findAll();
+        assertThat(articles.size()).isEqualTo(0);
+    }
+
+    @DisplayName("test update article")
+    @Test
+    public void update() throws Exception {
+        //given
+        final String url = "/api/articles/{id}";
+        Article article = blogRepository.save(Article.builder().title("title").content("content").build());
+
+        //when
+        final String updateTitle = "updateTitle";
+        final String updateContent = "updateContent";
+        String requestBody = objectMapper.writeValueAsString(new UpdateAriticleRequest(updateTitle, updateContent));
+
+        ResultActions result = mockMvc.perform(put(url, article.getId())
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(requestBody));
+        //then
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value(updateTitle))
+                .andExpect(jsonPath("$.content").value(updateContent));
     }
 }
