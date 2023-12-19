@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>blog article list</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+</head>
+<body>
+<div class="p-5 mb-5 text-center</> bg-light">
+    <h1 class="mb-3">Blog</h1>
+    <h4 class="mb-3">Welcome</h4>
+</div>
+<div class="container">
+    <div class="row-6" th:each="article : ${articles}">
+        <div class="card">
+            <div class="card-header" th:text="${article.id}"></div>
+            <div class="card-body">
+                <h5 class="card-title" th:text="${article.title}"></h5>
+                <p class="card-text" th:text="${article.content}"></p>
+                <a href="#" class="btn btn-primary">show article</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
