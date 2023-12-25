@@ -12,3 +12,7 @@ spring:
   h2:
     console:
       enabled: true
+
+jwt:
+  issuer: alswnsdl333@gmail.com
+  secret_key: test_jwt_secret_key
