@@ -1,6 +1,10 @@
 package org.mj.blog.config;
 
 import lombok.RequiredArgsConstructor;
+import org.mj.blog.config.jwt.JwtAccessDeniedHandler;
+import org.mj.blog.config.jwt.JwtAuthenticationEntryPoint;
+import org.mj.blog.config.jwt.JwtSecurityConfig;
+import org.mj.blog.config.jwt.TokenProvider;
 import org.mj.blog.service.UserDetailService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +12,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -16,6 +21,9 @@ import static org.springframework.boot.autoconfigure.security.servlet.PathReques
 @Configuration
 public class WebSecurityConfig {
 
+    private final TokenProvider tokenProvider;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final UserDetailService userService;
 
     // 스프링 시큐리티 기능 비활성화
@@ -29,21 +37,25 @@ public class WebSecurityConfig {
     // 특정 http 요청에 대한 웹 기반 보안 구성
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http
-                .authorizeRequests() // 인증 인가 설정
-                .requestMatchers("/login", "/signup", "/user").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .formLogin()
-                .loginPage("/login")
-                .defaultSuccessUrl("/articles")
-                .and()
-                .logout()
-                .logoutSuccessUrl("/login")
-                .invalidateHttpSession(true) // 로그 아웃시 세션 삭제 여부
-                .and()
-                .csrf().disable() // csrf 비활성화
-                .build();
+        http
+            .httpBasic().disable()
+            .csrf().disable()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+
+            .and()
+            .exceptionHandling()
+            .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+            .accessDeniedHandler(jwtAccessDeniedHandler)
+
+            .and()
+            .authorizeRequests() // 인증 인가 설정
+            .requestMatchers("/api/login", "/js/**", "/user", "/login", "/signup", "/h2-console/**").permitAll()
+            .anyRequest().authenticated()
+
+            .and()
+            .apply(new JwtSecurityConfig(tokenProvider));
+
+        return http.build();
     }
 
     // 인증 관리자 관련 설정

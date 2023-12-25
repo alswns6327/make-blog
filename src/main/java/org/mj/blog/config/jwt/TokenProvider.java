@@ -5,7 +5,9 @@ import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
+import org.mj.blog.config.TokenAuthenticationFilter;
 import org.mj.blog.domain.User;
+import org.mj.blog.dto.TokenDto;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,27 +24,45 @@ public class TokenProvider {
 
     private final JwtProperties jwtProperties;
 
-    public String generateToken(User user, Duration expiredAt){
+    public TokenDto generateToken(User user){
         Date now = new Date();
-        return makeToken(new Date(now.getTime() + expiredAt.toMillis()), user);
+
+        Duration accessTokenExpiredAt = Duration.ofHours(2);
+        Duration refreshTokenExpiredAt = Duration.ofDays(14);
+        return makeToken(
+                new Date(now.getTime() + accessTokenExpiredAt.toMillis()),
+                new Date(now.getTime() + refreshTokenExpiredAt.toMillis()),
+                user);
     }
 
     // 토큰 생성
-    private String makeToken(Date expiry, User user){
+    private TokenDto makeToken(Date accessTokenExpiry, Date refreshTokenExpiry, User user){
         Date now = new Date();
 
-        return Jwts.builder()
+         String accessToken = Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE) // 헤더 typ : JWT
                 // 내용
                 .setIssuer(jwtProperties.getIssuer()) // 토큰 생성자
                 .setIssuedAt(now) // 토큰 생성 시간
-                .setExpiration(expiry) // 토큰 유효시간
+                .setExpiration(accessTokenExpiry) // 토큰 유효시간
                 .setSubject(user.getEmail()) // 내용
                 .claim("id", user.getId()) // 클레임 id
                 // 서명
                 .signWith(SignatureAlgorithm.HS256, jwtProperties.getSecretKey()) // 설정한 비밀키와 HS256 방식으로 암호화
                 .compact();
 
+        String refreshToken = Jwts.builder()
+                .setHeaderParam(Header.TYPE, Header.JWT_TYPE) // 헤더 typ : JWT
+                // 내용
+                .setIssuer(jwtProperties.getIssuer()) // 토큰 생성자
+                .setIssuedAt(now) // 토큰 생성 시간
+                .setExpiration(refreshTokenExpiry) // 토큰 유효시간
+                .setSubject(user.getEmail()) // 내용
+                .claim("id", user.getId()) // 클레임 id
+                // 서명
+                .signWith(SignatureAlgorithm.HS256, jwtProperties.getSecretKey()) // 설정한 비밀키와 HS256 방식으로 암호화
+                .compact();
+        return TokenDto.builder().grantType("Bearer").accessToken(accessToken).refreshToken(refreshToken).build();
     }
 
     // 토큰 유효성 검증
