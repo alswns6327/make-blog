@@ -8,6 +8,17 @@ spring:
   :datasource:
     url: jdbc:h2:mem:testdb
     username: sa
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 829247905446-imqpv821fel632m6dp4fo2ti3546njgr.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
+
 
   h2:
     console:

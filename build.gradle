@@ -38,6 +38,9 @@ dependencies {
 
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
+    // Oauth2를 사용하기 위한 스타터
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
 }
 
 test {
