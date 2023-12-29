@@ -116,7 +116,7 @@ class BlogControllerTest {
 
         //given
         final String url = "/api/articles";
-        Article article = blogRepository.save(Article.builder().title("testTitle").content("testContent").build());
+        Article article = createDefaultArticle();
 
         //when
         ResultActions result = mockMvc.perform(get(url)
@@ -135,7 +135,7 @@ class BlogControllerTest {
     public void testArticleFindById() throws Exception{
         //given
         final String url = "/api/articles/{id}";
-        Article article = blogRepository.save(Article.builder().title("testTitle").content("testContent").build());
+        Article article = createDefaultArticle();
 
         //when
         ResultActions result = mockMvc.perform(get(url, article.getId()).accept(MediaType.APPLICATION_JSON));
@@ -151,7 +151,7 @@ class BlogControllerTest {
     public void deleteArticle() throws Exception {
         //given
         final String url = "/api/articles/{id}";
-        Article article = blogRepository.save(Article.builder().content("deleteContent").title("deleteTitle").build());
+        Article article = createDefaultArticle();
 
         //when
         ResultActions result = mockMvc.perform(delete(url, article.getId()));
@@ -168,7 +168,7 @@ class BlogControllerTest {
     public void update() throws Exception {
         //given
         final String url = "/api/articles/{id}";
-        Article article = blogRepository.save(Article.builder().title("title").content("content").build());
+        Article article = createDefaultArticle();
 
         //when
         final String updateTitle = "updateTitle";
@@ -182,5 +182,13 @@ class BlogControllerTest {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value(updateTitle))
                 .andExpect(jsonPath("$.content").value(updateContent));
+    }
+
+    private Article createDefaultArticle(){
+        return blogRepository.save(Article.builder()
+                .title("testTitle")
+                .content("testContent")
+                .author(user.getUsername())
+                .build());
     }
 }

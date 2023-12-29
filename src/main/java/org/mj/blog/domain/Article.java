@@ -34,7 +34,7 @@ public class Article {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "author", nullable = true)
+    @Column(name = "author", nullable = false)
     private String author;
 
     @Builder
