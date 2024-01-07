@@ -1,6 +1,7 @@
 package org.mj.blog.config;
 
 import lombok.RequiredArgsConstructor;
+import org.mj.blog.config.jwt.TokenProvider;
 import org.mj.blog.service.UserDetailService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -17,6 +19,7 @@ import static org.springframework.boot.autoconfigure.security.servlet.PathReques
 public class WebSecurityConfig {
 
     private final UserDetailService userService;
+    private final TokenProvider tokenProvider;
 
     // 스프링 시큐리티 기능 비활성화
     @Bean
@@ -30,6 +33,9 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
+                .csrf().disable() // csrf 비활성화
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
                 .authorizeRequests() // 인증 인가 설정
                 .requestMatchers("/login", "/signup", "/user").permitAll()
                 .anyRequest().authenticated()
@@ -40,9 +46,9 @@ public class WebSecurityConfig {
                 .and()
                 .logout()
                 .logoutSuccessUrl("/login")
-                .invalidateHttpSession(true) // 로그 아웃시 세션 삭제 여부
                 .and()
-                .csrf().disable() // csrf 비활성화
+                .addFilter(new TokenAuthenticationFilter(authenticationManager(http, bCryptPasswordEncoder())))
+                .addFilter(new TokenAuthorizationFilter(tokenProvider))
                 .build();
     }
 
