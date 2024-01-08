@@ -1,44 +1,43 @@
 package org.mj.blog.config;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.mj.blog.config.jwt.TokenProvider;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.util.Date;
+import java.io.IOException;
 
 @RequiredArgsConstructor
-public class TokenAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
-    private final AuthenticationManager authenticationManager;
+    private final TokenProvider tokenProvider;
+    private final static String HEADER_AUTHORIZATION = "authorization";
+    private final static String TOKEN_PREFIX = "Bearer";
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
-            throws AuthenticationException {
-        // 여기서는 간단한 예제로 username과 password를 파라미터로 받아와서 인증을 시도합니다.
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        // 요청 헤더의 Authorization 키의 값 조회
+        String authorizationHeader = request.getHeader(HEADER_AUTHORIZATION);
+        // Bearer 접두사 제거
+        String token = getAccessToken(authorizationHeader);
+        // 가져온 토큰 유효성 검사 후 유효한 경우 인증 정보 저장
+        if(tokenProvider.validToken(token)){
+            Authentication authentication = tokenProvider.getAuthentication(token);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
 
-        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        filterChain.doFilter(request, response);
     }
 
-    @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-                                            FilterChain chain, Authentication authResult) {
-        // 인증이 성공하면 JWT 토큰을 생성하여 응답 헤더에 추가합니다.
-        String token = Jwts.builder()
-                .setSubject(((org.springframework.security.core.userdetails.User) authResult.getPrincipal()).getUsername())
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1일
-                .signWith(SignatureAlgorithm.HS512, "your-secret-key") // 시크릿 키를 안전하게 관리해야 합니다.
-                .compact();
-
-        response.addHeader("Authorization", "Bearer " + token);
+    private String getAccessToken(String authorizationHeader){
+        if(authorizationHeader != null && authorizationHeader.startsWith(TOKEN_PREFIX)){
+            return authorizationHeader.substring(TOKEN_PREFIX.length());
+        }
+        return null;
     }
 }
