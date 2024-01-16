@@ -14,7 +14,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import static org.springframework.boot.autoconfigure.security.servlet.PathRequest.toH2Console;
 @RequiredArgsConstructor
 @Configuration
 public class WebSecurityConfig {
@@ -26,7 +25,6 @@ public class WebSecurityConfig {
     @Bean
     public WebSecurityCustomizer configure(){
         return (web) -> web.ignoring()
-                .requestMatchers(toH2Console())
                 .requestMatchers("/static/**");
     }
 
@@ -39,7 +37,7 @@ public class WebSecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests() // 인증 인가 설정
-                .requestMatchers("/login", "/signup", "/user").permitAll()
+                .requestMatchers("/login", "/signup", "/user", "/api/articles").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(new TokenAuthenticationFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class)

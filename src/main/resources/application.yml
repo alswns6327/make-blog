@@ -4,14 +4,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    defer-datasource-initialization: true
-  :datasource:
-    url: jdbc:h2:mem:testdb
-    username: sa
-
-  h2:
-    console:
-      enabled: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/test?characterEncoding=utf8
+    username: root
+    password: vnvnvn125a
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
 jwt:
   issuer: alswnsdl333@gmail.com
